@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Preferences{% endblock %}
+{% block content %}
+<h1 class="h3 mb-4">Preferences</h1>
+<div class="row g-4">
+  <div class="col-md-6">
+    <div class="card shadow-sm"><div class="card-body">
+      <h2 class="h5">Profile &amp; defaults</h2>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="profile">
+        <div class="mb-3">
+          <label class="form-label" for="display_name">Display name</label>
+          <input class="form-control" id="display_name" name="display_name" value="{{ current_user.display_name or '' }}">
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="default_logo_id">Default logo</label>
+          <select class="form-select" id="default_logo_id" name="default_logo_id">
+            <option value="">Use global default</option>
+            {% for l in logos %}
+            <option value="{{ l.id }}" {% if current_user.default_logo_id == l.id %}selected{% endif %}>{{ l.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="default_card_template_id">Preferred card template</label>
+          <select class="form-select" id="default_card_template_id" name="default_card_template_id">
+            <option value="">Use global default</option>
+            {% for t in templates %}
+            <option value="{{ t.id }}" {% if current_user.default_card_template_id == t.id %}selected{% endif %}>{{ t.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button class="btn btn-primary">Save</button>
+      </form>
+    </div></div>
+  </div>
+  {% if current_user.auth_type == 'local' %}
+  <div class="col-md-6">
+    <div class="card shadow-sm"><div class="card-body">
+      <h2 class="h5">Change password</h2>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="password">
+        <div class="mb-3">
+          <label class="form-label" for="current_password">Current password</label>
+          <input class="form-control" type="password" id="current_password" name="current_password" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="new_password">New password <span class="text-muted">(8+ characters)</span></label>
+          <input class="form-control" type="password" id="new_password" name="new_password" minlength="8" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="confirm">Confirm new password</label>
+          <input class="form-control" type="password" id="confirm" name="confirm" required>
+        </div>
+        <button class="btn btn-primary">Update password</button>
+      </form>
+    </div></div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

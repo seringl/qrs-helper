@@ -1,0 +1,34 @@
+# DESIGN.md v2.3 §13/§16 — two services, HTTPS baseline.
+# Demo + production: docker compose up --build
+services:
+  app:
+    build: .
+    env_file: .env
+    restart: unless-stopped
+    volumes:
+      # Runtime data persists on the host: database, uploads, outputs, TLS certs
+      - ./instance:/srv/qrs-helper/instance
+      # Live code reload in development; harmless in production
+      - ./app:/srv/qrs-helper/app
+    expose:
+      - "5000"   # internal network only — never published to the host (§16.2)
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:5000/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 15s
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"     # 301 → https (§16.2)
+      - "443:443"   # TLS termination
+    volumes:
+      - ./deploy/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./instance/ssl:/etc/nginx/ssl:ro
+      - ./app/static:/srv/static:ro
+    depends_on:
+      app:
+        condition: service_healthy

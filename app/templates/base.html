@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ site_title }} — {{ site_subtitle }}{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body class="bg-light">
+<nav class="navbar navbar-expand-lg navbar-dark app-navbar">
+  <div class="container-fluid px-4">
+    <a class="navbar-brand brand-block d-flex align-items-center" href="{{ url_for('main.index') }}">
+      {% if site_logo_url %}<img src="{{ site_logo_url }}" alt="" class="brand-logo">{% endif %}
+      <span class="brand-text">
+        <span class="brand-title">{{ site_title }}</span>
+        <span class="brand-subtitle">{{ site_subtitle }}</span>
+      </span>
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="nav">
+      {% if current_user.is_authenticated %}
+      <ul class="navbar-nav ms-auto align-items-lg-center">
+        {% if current_user.role_at_least('user') %}
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Create</a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="{{ url_for('create.create', mode='full_card') }}">QR + Short Link (full card)</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('create.create', mode='qr_only') }}">QR code only</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('create.create', mode='shortlink_only') }}">Short link only</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Review</a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="{{ url_for('stats.index') }}">Stats</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('history.index') }}">My History</a></li>
+            {% if current_user.role_at_least('reporter') %}
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{{ url_for('history.all_history') }}">All History</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('stats.export_csv') }}">Export CSV</a></li>
+            {% endif %}
+          </ul>
+        </li>
+        {% endif %}
+        {% if current_user.role_at_least('admin') %}
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Admin</a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="{{ url_for('admin.users') }}">Users</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('admin.logos') }}">Logos</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('admin.templates') }}">Card Templates</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('admin.domains') }}">Bitly Domains</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('admin.settings') }}">App Settings</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('admin.history') }}">All History</a></li>
+          </ul>
+        </li>
+        {% endif %}
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.help_page') }}">Help</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">{{ current_user.label }}</a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            {% if current_user.role_at_least('user') %}
+            <li><a class="dropdown-item" href="{{ url_for('stats.index', scope='me') }}">My Stats</a></li>
+            {% endif %}
+            <li><a class="dropdown-item" href="{{ url_for('preferences.index') }}">User Settings</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Log out</a></li>
+          </ul>
+        </li>
+      </ul>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+<main class="container py-4">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endwith %}
+
+  {% if current_user.is_authenticated and current_user.role == 'no_access' %}
+    <div class="alert alert-info">
+      Your account is awaiting access. An administrator must grant you a role
+      before you can create links or QR codes.
+    </div>
+  {% endif %}
+
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="text-center text-muted small py-3">
+  {{ site_title }} — {{ site_subtitle }}
+</footer>
+
+<script src="{{ url_for('static', filename='vendor/bootstrap.bundle.min.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

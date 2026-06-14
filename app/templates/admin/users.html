@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Admin — Users{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">Admin</h1>
+{% include "admin/_nav.html" %}
+
+<div class="card shadow-sm mb-4"><div class="card-body">
+  <h2 class="h5">Add local user</h2>
+  <form method="post" action="{{ url_for('admin.create_user') }}" class="row g-2 align-items-end">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="col-md-3">
+      <label class="form-label" for="nu-username">Username</label>
+      <input class="form-control" id="nu-username" name="username" required>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label" for="nu-display">Display name</label>
+      <input class="form-control" id="nu-display" name="display_name" required>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label" for="nu-email">Email <span class="text-muted">(optional)</span></label>
+      <input class="form-control" type="email" id="nu-email" name="email">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label" for="nu-role">Role</label>
+      <select class="form-select" id="nu-role" name="role">
+        {% for r in roles %}<option value="{{ r }}" {% if r == 'user' %}selected{% endif %}>{{ r }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-md-1">
+      <button class="btn btn-primary w-100">Add</button>
+    </div>
+    <div class="col-12">
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="nu-backhalves" name="can_custom_backhalves">
+        <label class="form-check-label" for="nu-backhalves">Allow custom back-halves</label>
+      </div>
+      <div class="form-text">A temporary password is generated and shown once; the user must change it on first login.</div>
+    </div>
+  </form>
+</div></div>
+
+<div class="card shadow-sm"><div class="table-responsive">
+  <table class="table align-middle mb-0">
+    <thead><tr>
+      <th>Username</th><th>Auth</th><th>Role</th><th>Custom back-halves</th>
+      <th>Active</th><th>Session expiry (days)</th><th>Last login</th><th></th>
+    </tr></thead>
+    <tbody>
+    {% for u in users %}
+    <tr>
+      <form method="post" action="{{ url_for('admin.update_user', user_id=u.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <td>{{ u.username }}<br><small class="text-muted">{{ u.display_name or '' }}</small></td>
+      <td><span class="badge text-bg-{{ 'info' if u.auth_type == 'ldap' else 'secondary' }}">{{ u.auth_type }}</span></td>
+      <td>
+        <select class="form-select form-select-sm" name="role">
+          {% for r in roles %}<option value="{{ r }}" {% if u.role == r %}selected{% endif %}>{{ r }}</option>{% endfor %}
+        </select>
+      </td>
+      <td class="text-center"><input class="form-check-input" type="checkbox" name="can_custom_backhalves" {% if u.can_custom_backhalves %}checked{% endif %}></td>
+      <td class="text-center"><input class="form-check-input" type="checkbox" name="is_active" {% if u.is_active %}checked{% endif %} {% if u.id == current_user.id %}disabled{% endif %}></td>
+      <td><input class="form-control form-control-sm" name="session_expiry_days" value="{{ u.session_expiry_days if u.session_expiry_days is not none else '' }}" placeholder="global" style="width:6rem;"></td>
+      <td><small>{{ u.last_login.strftime('%Y-%m-%d') if u.last_login else 'never' }}</small></td>
+      <td class="text-end text-nowrap">
+        <button class="btn btn-sm btn-primary">Save</button>
+      </form>
+        {% if u.auth_type == 'local' %}
+        <form method="post" action="{{ url_for('admin.reset_user_password', user_id=u.id) }}" class="d-inline"
+              onsubmit="return confirm('Reset password for {{ u.username }}?');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-sm btn-outline-warning">Reset PW</button>
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div></div>
+{% endblock %}

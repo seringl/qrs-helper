@@ -1,0 +1,8 @@
+.env
+instance/
+__pycache__/
+*.pyc
+*.db
+.DS_Store
+app/static/fonts/*.ttf
+app/static/vendor/

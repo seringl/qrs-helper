@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Stats — {{ r.title }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-1">
+  <h1 class="h3 mb-0">{{ r.title }}</h1>
+  <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('stats.export_csv', qr_id=r.id) }}">Export CSV</a>
+</div>
+<p class="text-muted">{{ r.short_url }} → {{ r.long_url }}</p>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-8">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <h2 class="h6 text-muted">Clicks — last 30 days</h2>
+      <canvas id="trend"></canvas>
+    </div></div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <h2 class="h6 text-muted">Devices</h2>
+      <canvas id="devices"></canvas>
+    </div></div>
+  </div>
+</div>
+
+<div class="card shadow-sm"><div class="card-body">
+  <h2 class="h6 text-muted">Recent clicks (latest 500)</h2>
+  <div class="table-responsive">
+    <table class="table table-sm table-hover mb-0">
+      <thead><tr><th>Time (UTC)</th><th>Country</th><th>City</th><th>Device</th><th>OS</th><th>Browser</th><th>Referrer</th></tr></thead>
+      <tbody>
+      {% for c in clicks %}
+        <tr>
+          <td>{{ c.clicked_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td>{{ c.country or '—' }}</td><td>{{ c.city or '—' }}</td>
+          <td>{{ c.device_type or '—' }}</td><td>{{ c.os or '—' }}</td>
+          <td>{{ c.browser or '—' }}</td><td>{{ c.referrer or 'direct' }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="7" class="text-muted text-center py-3">No clicks harvested yet. The harvester runs automatically every hour.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div></div>
+<a href="{{ url_for('stats.index') }}" class="btn btn-link mt-2">&larr; Back to dashboard</a>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/chart.umd.min.js') }}"></script>
+<script>
+  const D = {{ data | tojson }};
+  new Chart(document.getElementById('trend'), {
+    type: 'line',
+    data: { labels: D.trend_labels, datasets: [{ label: 'Clicks', data: D.trend_values, borderColor: '#1E395E', tension: .25 }] },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+  });
+  new Chart(document.getElementById('devices'), {
+    type: 'doughnut',
+    data: { labels: D.devices.map(x => x[0]), datasets: [{ data: D.devices.map(x => x[1]) }] }
+  });
+</script>
+{% endblock %}

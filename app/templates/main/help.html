@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+{% block title %}Help — {{ site_title }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-xl-10">
+<h1 class="h3 mb-4">Help &amp; How-To</h1>
+
+<ul class="nav nav-tabs mb-4" id="help-tabs" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active" id="tab-user-btn" data-bs-toggle="tab" data-bs-target="#tab-user" type="button" role="tab">User guide</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="tab-stats-btn" data-bs-toggle="tab" data-bs-target="#tab-stats" type="button" role="tab">Click statistics</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="tab-settings-btn" data-bs-toggle="tab" data-bs-target="#tab-settings" type="button" role="tab">User settings</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="tab-admin-btn" data-bs-toggle="tab" data-bs-target="#tab-admin" type="button" role="tab">Admin &amp; setup</button>
+  </li>
+</ul>
+
+<div class="tab-content">
+
+  {# ── USER GUIDE ───────────────────────────────────────────────────────── #}
+  <div class="tab-pane fade show active" id="tab-user" role="tabpanel">
+    <div class="card shadow-sm mb-4"><div class="card-body">
+      <h2 class="h5">The three creation modes</h2>
+      <p><strong>QR + Short Link (full card)</strong> — creates a Bitly short link, a
+      branded QR code pointing at it, and a print-ready card (4.25" × 5.5"). Best
+      choice for flyers, posters, and handouts. Click tracking is included.</p>
+      <p><strong>QR code only</strong> — a branded QR code for a URL you already have.
+      You get the QR exactly as generated (high-resolution PNG + vector SVG) <em>and</em>
+      a full print-ready card with your call-to-action and the destination URL. No
+      short link is created, so clicks are not tracked.</p>
+      <p><strong>Short link only</strong> — just the Bitly short link, with click
+      tracking. Use it for emails, social posts, or anywhere a tidy URL matters.</p>
+    </div></div>
+
+    <div class="card shadow-sm mb-4"><div class="card-body">
+      <h2 class="h5">Creating something, step by step</h2>
+      <ol class="mb-0">
+        <li>Open <strong>Create</strong> from the menu and pick a mode.</li>
+        <li>Enter a <strong>title</strong> (for your own reference) and the <strong>destination URL</strong>.</li>
+        <li>For short links, choose a <strong>branded domain</strong> (or the default if allowed).</li>
+        <li>For QR/card modes, pick a <strong>logo</strong> and a <strong>card template</strong>.</li>
+        <li>Optionally tick <strong>Change the call-to-action text</strong> to override the template's default.</li>
+        <li>Click <strong>Generate</strong>. You'll land on a results page with a preview and downloads.</li>
+      </ol>
+    </div></div>
+
+    <div class="card shadow-sm mb-4"><div class="card-body">
+      <h2 class="h5">What's in the download ZIP</h2>
+      <table class="table table-sm">
+        <tbody>
+          <tr><td><code>card_print.png</code></td><td>The framed card at print quality (300 dpi). Use for print.</td></tr>
+          <tr><td><code>card_print.svg</code></td><td>The card as a vector file for design programs (Illustrator, Inkscape).</td></tr>
+          <tr><td><code>qr_raw.png</code></td><td>The QR code alone, high resolution, for placing in existing designs.</td></tr>
+          <tr><td><code>qr_raw.svg</code></td><td>The QR code alone as a vector — best quality for professional print.</td></tr>
+          <tr><td><code>HOW_TO_USE.txt</code></td><td>This same guidance, included with every package.</td></tr>
+        </tbody>
+      </table>
+    </div></div>
+
+    <div class="card shadow-sm"><div class="card-body">
+      <h2 class="h5">Print tips</h2>
+      <p class="mb-0">Always test-scan a printed proof before mass printing. Don't shrink
+      the QR code below 0.8" × 0.8" on paper, and keep clear space around it.
+      Dark-on-light scans best — avoid printing the code over photos or busy
+      backgrounds.</p>
+    </div></div>
+  </div>
+
+  {# ── CLICK STATISTICS (REVIEW) ────────────────────────────────────────── #}
+  <div class="tab-pane fade" id="tab-stats" role="tabpanel">
+    <div class="card shadow-sm mb-4"><div class="card-body">
+      <h2 class="h5">Where to find your numbers</h2>
+      <p>Everything click-related lives under the <strong>Review</strong> menu.
+      <strong>Review → Stats</strong> is the analytics dashboard; <strong>Review → My
+      History</strong> lists your items with a click count you can click into for a
+      drill-down. Reporters and admins also get <strong>All History</strong> and
+      <strong>Export CSV</strong>.</p>
+    </div></div>
+
+    <div class="card shadow-sm mb-4"><div class="card-body">
+      <h2 class="h5">What the dashboard shows</h2>
+      <p>For the links you select, the Stats page presents:</p>
+      <ul>
+        <li><strong>Click trend</strong> over time, so you can see when scans happened.</li>
+        <li><strong>Devices</strong> — desktop vs. mobile vs. tablet breakdown.</li>
+        <li><strong>Countries</strong> and <strong>cities</strong> where clicks came from.</li>
+        <li><strong>Referrers</strong> — where the traffic originated.</li>
+        <li>A <strong>"My data" toggle</strong> to scope everything to just your own items.</li>
+        <li><strong>CSV export</strong> (reporter/admin) for use in a spreadsheet.</li>
+      </ul>
+    </div></div>
+
+    <div class="card shadow-sm"><div class="card-body">
+      <h2 class="h5">Why a new link shows zero clicks</h2>
+      <p class="mb-0">Click data is gathered from Bitly automatically about once an
+      hour, so a brand-new link reads zero until the next harvest. Only short links
+      are tracked — QR-only items have no short link and therefore no click data. An
+      admin can pull fresh numbers immediately from <strong>Admin → App Settings →
+      Troubleshooting</strong>.</p>
+    </div></div>
+  </div>
+
+  {# ── USER SETTINGS ────────────────────────────────────────────────────── #}
+  <div class="tab-pane fade" id="tab-settings" role="tabpanel">
+    <div class="card shadow-sm mb-4"><div class="card-body">
+      <h2 class="h5">Your settings</h2>
+      <p>Open <strong>(your name) → User Settings</strong> in the top-right menu.</p>
+      <ul class="mb-0">
+        <li><strong>Display name</strong> — the name shown for you across the app.</li>
+        <li><strong>Default logo</strong> — pre-selected on the Create form so you don't
+        pick it each time (falls back to the global default).</li>
+        <li><strong>Preferred card template</strong> — pre-selected on the Create form.</li>
+        <li><strong>Change password</strong> — for local accounts. Directory accounts
+        manage their password in the directory.</li>
+      </ul>
+    </div></div>
+
+    <div class="card shadow-sm"><div class="card-body">
+      <h2 class="h5">Custom back-halves</h2>
+      <p class="mb-0">If an admin has granted you permission, the Create form shows a
+      <strong>custom back-half</strong> field for short links — the bit after the
+      slash (e.g. <code>example.co/SummerConcerts</code>). It needs a branded domain
+      that supports custom links on your Bitly account.</p>
+    </div></div>
+  </div>
+
+  {# ── ADMIN & SETUP ────────────────────────────────────────────────────── #}
+  {# Ordered to follow the path you'd actually take setting the site up. #}
+  <div class="tab-pane fade" id="tab-admin" role="tabpanel">
+
+    <div class="card shadow-sm mb-4"><div class="card-body">
+      <h2 class="h5">1. First-time setup checklist</h2>
+      <p class="text-muted small">After your first login as <code>qrsadmin</code> (and setting
+      a new password), work top to bottom. Each step links to its own section below.</p>
+      <ol class="mb-0">
+        <li>Set <strong>branding &amp; global options</strong> in App Settings.</li>
+        <li>Add at least one <strong>Bitly domain</strong> (or allow the default for testing).</li>
+        <li>Upload one or more <strong>logos</strong> and set a global default.</li>
+        <li>Review the seeded <strong>Standard</strong> card template, or create your own.</li>
+        <li>Create the <strong>user accounts</strong> people will log in with and set their roles.</li>
+        <li>Create a test card end-to-end and scan it from a phone to confirm it resolves.</li>
+      </ol>
+    </div></div>
+
+    <div class="card shadow-sm mb-4"><div class="card-body">
+      <h2 class="h5">2. App Settings &amp; branding</h2>
+      <p>Start here — these global options shape everything else. The right-hand panel holds:</p>
+      <ul>
+        <li><strong>Site title / subtitle</strong> — shown in the menu bar.</li>
+        <li><strong>Open registration</strong> — allow self sign-up (new users get No access until promoted).</li>
+        <li><strong>Allow Bitly default domain</strong> — if false, only branded domains may be used.</li>
+        <li><strong>Session expiry days</strong> — global auto-logout; 0 = never.</li>
+        <li><strong>File retention days</strong> — how long generated files are kept; 0 = forever.</li>
+        <li><strong>Analytics harvest interval (min)</strong> — how often clicks are pulled (restart to apply).</li>
+        <li><strong>Analytics retention days</strong> — how long click records are kept; 0 = forever.</li>
+      </ul>
+      <p class="mb-0">The <strong>Branding</strong> card on the left uploads the small logo
+      mark shown next to the site name in the menu bar.</p>
+    </div></div>
+
+    <div class="card shadow-sm mb-4"><div class="card-body">
+      <h2 class="h5">3. Bitly Domains</h2>
+      <p class="mb-0">Add the branded short domains your organisation uses (for example
+      <code>example.co</code>, with no <code>https://</code>). Each domain must already
+      exist on your Bitly account. Mark one as the default, and activate/deactivate as
+      needed. Whether the plain <code>bit.ly</code> domain is allowed is set in App Settings.</p>
+    </div></div>
+
+    <div class="card shadow-sm mb-4"><div class="card-body">
+      <h2 class="h5">4. Logos</h2>
+      <p class="mb-0">Upload the logos users can drop into QR codes (PNG, JPG, or SVG; a
+      PNG/SVG with a transparent background works best). Mark one as the global default,
+      and activate/deactivate logos. The logo is uploaded to QRCode Monkey and embedded
+      into the QR code when one is generated.</p>
+    </div></div>
+
+    <div class="card shadow-sm mb-4"><div class="card-body">
+      <h2 class="h5">5. Card Templates</h2>
+      <p>Templates control how the printed card looks. Each one has a live preview that
+      updates as you change it. Settings:</p>
+      <ul class="mb-0">
+        <li><strong>Colours</strong> — background, inner panel, and text.</li>
+        <li><strong>Corner style</strong> — square for sharp corners, or rounded/custom to
+        use the radius sliders.</li>
+        <li><strong>Outer corner radius</strong> — how round the card's outer corners are.</li>
+        <li><strong>Inner corner radius</strong> — the white QR panel's corners, set
+        independently of the outer corners.</li>
+        <li><strong>QR code size</strong> — how large the QR sits, centred in the panel.</li>
+        <li><strong>CTA text position</strong> and <strong>URL text position</strong> — slide
+        each line up or down to taste.</li>
+        <li><strong>Default CTA text</strong> — the call-to-action used unless a creator
+        overrides it.</li>
+      </ul>
+      <p class="text-muted small mt-2 mb-0">Every slider has − / + buttons for precise
+      nudging in addition to dragging. Both text lines auto-size to the inner frame
+      width; the CTA uses Inter SemiBold and the URL uses Inter Light.</p>
+    </div></div>
+
+    <div class="card shadow-sm mb-4"><div class="card-body">
+      <h2 class="h5">6. Users &amp; roles</h2>
+      <p>Create the accounts people log in with under <strong>Admin → Users</strong>. For
+      each local account a temporary password is generated and shown once; the user must
+      change it on first login. From the same screen you set the role, toggle the
+      <strong>custom back-half</strong> permission, set a per-user session expiry,
+      deactivate accounts, and reset passwords. (You can't demote your own admin account.)</p>
+      <p class="mb-1">Each account has exactly one role, from least to most access:</p>
+      <ul class="mb-0">
+        <li><strong>No access</strong> — where self-registered users land until you promote them.</li>
+        <li><strong>User</strong> — can create short links, QR codes, and cards, and see their own history and stats.</li>
+        <li><strong>Reporter</strong> — everything a user can do, plus All History and CSV export.</li>
+        <li><strong>Admin</strong> — full access, including everything in this Admin menu.</li>
+      </ul>
+    </div></div>
+
+    <div class="card shadow-sm" id="background-jobs"><div class="card-body">
+      <h2 class="h5">Background jobs &amp; Troubleshooting</h2>
+      <p>Two jobs run on their own in the background. The Troubleshooting card on the
+      App Settings page lets an admin run either one immediately:</p>
+      <p><strong>Run analytics harvest now</strong> — contacts Bitly and pulls the latest
+      click counts for every tracked short link, storing them locally so the Stats and
+      History pages are up to date. This normally runs automatically every hour (see the
+      harvest interval setting). Run it manually right after creating a link if you don't
+      want to wait for the next scheduled run.</p>
+      <p class="mb-0"><strong>Run retention cleanup now</strong> — deletes generated card/QR
+      files and stored click records that are older than the retention periods in App
+      Settings (File retention days and Analytics retention days), freeing disk space.
+      This normally runs once a day. You'll be asked to confirm because deletion can't be
+      undone.</p>
+    </div></div>
+  </div>
+
+</div>
+</div></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Activate a tab from the URL hash (e.g. /help#background-jobs opens the
+  // Admin tab and scrolls to that section). Also keep the hash in sync.
+  (function () {
+    const hash = window.location.hash;
+    if (hash) {
+      const target = document.querySelector(hash);
+      const pane = target ? target.closest('.tab-pane') : null;
+      if (pane) {
+        const btn = document.querySelector('[data-bs-target="#' + pane.id + '"]');
+        if (btn && window.bootstrap) new bootstrap.Tab(btn).show();
+        setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+      } else {
+        const btn = document.querySelector('[data-bs-target="' + hash + '"]');
+        if (btn && window.bootstrap) new bootstrap.Tab(btn).show();
+      }
+    }
+  })();
+</script>
+{% endblock %}

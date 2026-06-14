@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Admin — Card Templates{% endblock %}
+
+{# Reusable slider row: label + live value, with − / + steppers flanking a range. #}
+{% macro slider(id, label, value, min, max, step, unit='px') %}
+<div class="mb-3 slider-row">
+  <div class="d-flex justify-content-between align-items-center mb-1">
+    <label class="form-label mb-0" for="{{ id }}">{{ label }}</label>
+    <span class="badge text-bg-light border"><span id="{{ id }}-val">{{ value }}</span> {{ unit }}</span>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <button type="button" class="btn btn-outline-secondary btn-sm step-btn" data-target="{{ id }}" data-dir="-1" aria-label="Decrease {{ label }}">−</button>
+    <input class="form-range flex-grow-1" type="range" id="{{ id }}" name="{{ id }}"
+           min="{{ min }}" max="{{ max }}" step="{{ step }}" value="{{ value }}">
+    <button type="button" class="btn btn-outline-secondary btn-sm step-btn" data-target="{{ id }}" data-dir="1" aria-label="Increase {{ label }}">+</button>
+  </div>
+</div>
+{% endmacro %}
+
+{% block content %}
+<h1 class="h3 mb-3">Admin</h1>
+{% include "admin/_nav.html" %}
+<div class="row g-4">
+  <div class="col-lg-5">
+    <div class="card shadow-sm"><div class="card-body">
+      <h2 class="h5">{{ 'Edit template' if edit else 'New template' }}</h2>
+      <form method="post" action="{{ url_for('admin.edit_template', tpl_id=edit.id) if edit else url_for('admin.templates') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-3">
+          <label class="form-label" for="t-name">Name</label>
+          <input class="form-control" name="name" id="t-name" value="{{ edit.name if edit else '' }}" required>
+        </div>
+
+        <div class="row">
+          <div class="col mb-3">
+            <label class="form-label" for="t-bg">Background</label>
+            <input class="form-control form-control-color w-100" type="color" name="background_color" id="t-bg" value="{{ edit.background_color if edit else '#1E395E' }}">
+          </div>
+          <div class="col mb-3">
+            <label class="form-label" for="t-panel">Panel</label>
+            <input class="form-control form-control-color w-100" type="color" name="panel_color" id="t-panel" value="{{ edit.panel_color if edit else '#FFFFFF' }}">
+          </div>
+          <div class="col mb-3">
+            <label class="form-label" for="t-text">Text</label>
+            <input class="form-control form-control-color w-100" type="color" name="text_color" id="t-text" value="{{ edit.text_color if edit else '#FFFFFF' }}">
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="t-style">Corner style</label>
+          <select class="form-select" name="corner_style" id="t-style">
+            {% for s in ['square', 'rounded', 'custom'] %}
+            <option value="{{ s }}" {% if edit and edit.corner_style == s %}selected{% elif not edit and s == 'rounded' %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+          </select>
+          <div class="form-text">Choose <strong>square</strong> for sharp corners, or use the sliders below to round the outer card and inner panel independently.</div>
+        </div>
+
+        <fieldset class="border rounded p-3 mb-3" id="size-controls">
+          <legend class="float-none w-auto px-2 h6 text-muted">Shape &amp; sizing</legend>
+          {{ slider('corner_radius_px', 'Outer corner radius', edit.corner_radius_px if edit else 120, 0, 300, 2) }}
+          {{ slider('inner_corner_radius_px', 'Inner corner radius', edit.inner_corner_radius_px if edit else 30, 0, 300, 2) }}
+          {{ slider('qr_size_px', 'QR code size', edit.qr_size_px if edit else 880, 400, 1050, 5) }}
+          {{ slider('cta_baseline_y', 'CTA text position', edit.cta_baseline_y if edit else 1320, 1150, 1640, 5) }}
+          {{ slider('url_baseline_y', 'URL text position', edit.url_baseline_y if edit else 1480, 1150, 1640, 5) }}
+        </fieldset>
+
+        <div class="mb-3">
+          <label class="form-label" for="t-cta">Default CTA text</label>
+          <input class="form-control" id="t-cta" name="default_cta_text" value="{{ edit.default_cta_text if edit else 'Scan for more info!' }}">
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="is_default" id="t-default" {% if edit and edit.is_default %}checked{% endif %}>
+          <label class="form-check-label" for="t-default">Pre-selected default template</label>
+        </div>
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" name="is_active" id="t-active" {% if not edit or edit.is_active %}checked{% endif %}>
+          <label class="form-check-label" for="t-active">Active</label>
+        </div>
+        <button class="btn btn-primary">{{ 'Save changes' if edit else 'Create template' }}</button>
+        {% if edit %}<a class="btn btn-link" href="{{ url_for('admin.templates') }}">Cancel</a>{% endif %}
+      </form>
+    </div></div>
+  </div>
+
+  <div class="col-lg-3">
+    <div class="card shadow-sm sticky-top" style="top:1rem;"><div class="card-body text-center">
+      <h2 class="h6 text-muted">Live preview</h2>
+      <!-- §9.3: live SVG preview updates as the sliders move -->
+      <svg id="preview" viewBox="0 0 1275 1650" style="max-width:100%;">
+        <rect id="p-card" x="0" y="0" width="1275" height="1650" rx="120" fill="#1E395E"/>
+        <rect id="p-panel" x="90" y="90" width="1095" height="1050" rx="30" fill="#FFFFFF"/>
+        <rect id="p-qr" x="197" y="175" width="880" height="880" fill="#1E395E" opacity="0.15"/>
+        <text id="p-cta" x="637" y="1320" font-size="95" font-weight="600" text-anchor="middle" fill="#FFFFFF" font-family="Inter, sans-serif">Scan for more info!</text>
+        <text id="p-url" x="637" y="1480" font-size="70" font-weight="300" text-anchor="middle" fill="#FFFFFF" font-family="Inter, sans-serif">https://example.co/Link</text>
+      </svg>
+    </div></div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card shadow-sm"><div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead><tr><th>Name</th><th></th><th></th></tr></thead>
+        <tbody>
+        {% for t in templates %}
+        <tr class="{{ '' if t.is_active else 'table-secondary' }}">
+          <td>
+            <span class="color-dot" style="background:{{ t.background_color }};"></span>
+            {{ t.name }}
+            {% if t.is_default %}<span class="badge text-bg-success">default</span>{% endif %}
+          </td>
+          <td><a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.edit_template', tpl_id=t.id) }}">Edit</a></td>
+          <td>
+            <form method="post" action="{{ url_for('admin.toggle_template', tpl_id=t.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-sm btn-outline-secondary">{{ 'Deactivate' if t.is_active else 'Activate' }}</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/template_preview.js') }}"></script>
+{% endblock %}

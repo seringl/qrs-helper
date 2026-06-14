@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ 'All History' if all_users else 'My History' }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">{{ 'All History' if all_users else 'My History' }}</h1>
+  <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('stats.export_csv') }}">Export CSV</a>
+</div>
+<div class="card shadow-sm"><div class="table-responsive">
+  <table class="table table-hover align-middle mb-0">
+    <thead><tr>
+      <th>Title</th><th>Mode</th>{% if all_users %}<th>User</th>{% endif %}
+      <th>Short URL</th><th>Created (UTC)</th><th class="text-end">Clicks</th><th></th>
+    </tr></thead>
+    <tbody>
+    {% for r, clicks in rows %}
+      <tr>
+        <td><a href="{{ url_for('create.result', qr_id=r.id) }}">{{ r.title }}</a></td>
+        <td><span class="badge text-bg-secondary">{{ r.generation_mode.replace('_', ' ') }}</span></td>
+        {% if all_users %}<td>{{ r.user.username }}</td>{% endif %}
+        <td>{{ r.short_url or '—' }}</td>
+        <td>{{ r.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td class="text-end">
+          {% if r.bitly_id %}<a href="{{ url_for('stats.link_detail', qr_id=r.id) }}">{{ clicks }}</a>{% else %}—{% endif %}
+        </td>
+        <td class="text-end">
+          {% if r.zip_path %}
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('create.files', qr_id=r.id, kind='zip') }}">ZIP</a>
+          {% endif %}
+        </td>
+      </tr>
+    {% else %}
+      <tr><td colspan="{{ 7 if all_users else 6 }}" class="text-center text-muted py-4">Nothing here yet.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div></div>
+{% endblock %}

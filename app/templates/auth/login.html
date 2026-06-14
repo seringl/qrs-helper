@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Log in — {{ site_title }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-5">
+    <div class="text-center mb-4">
+      <h1 class="h3">{{ site_title }}</h1>
+      <p class="text-muted">Create short links, branded QR codes, and print-ready cards.</p>
+    </div>
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <form method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          {% if ldap_enabled %}
+          <div class="mb-3">
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="auth_method" id="m-local" value="local" checked>
+              <label class="form-check-label" for="m-local">Local account</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="radio" name="auth_method" id="m-dir" value="directory" {% if not ldap_available %}disabled{% endif %}>
+              <label class="form-check-label {% if not ldap_available %}text-muted{% endif %}" for="m-dir">Directory login</label>
+            </div>
+            {% if not ldap_available %}
+            <div class="form-text text-warning">Directory login is currently unavailable. Please use local credentials.</div>
+            {% endif %}
+          </div>
+          {% else %}
+          <input type="hidden" name="auth_method" value="local">
+          {% endif %}
+          <div class="mb-3">
+            <label class="form-label" for="username">Username</label>
+            <input class="form-control" id="username" name="username" required autofocus>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="password">Password</label>
+            <input class="form-control" type="password" id="password" name="password" required>
+          </div>
+          <button class="btn btn-primary w-100">Log in</button>
+        </form>
+      </div>
+    </div>
+    {% if open_registration %}
+    <p class="text-center mt-3">
+      No account? <a href="{{ url_for('auth.register') }}">Register here</a>.
+    </p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

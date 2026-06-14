@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Admin — App Settings{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">Admin</h1>
+{% include "admin/_nav.html" %}
+<div class="row justify-content-start g-4">
+  <div class="col-md-5">
+    <div class="card shadow-sm mb-4"><div class="card-body">
+      <h2 class="h5">Branding</h2>
+      <p class="text-muted small">The title and subtitle below are edited with the
+      other settings on the right. The logo mark appears in the menu bar next to them.</p>
+      <form method="post" action="{{ url_for('admin.branding') }}" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% if site_logo_url %}
+        <div class="mb-2">
+          <img src="{{ site_logo_url }}" alt="Current site logo" style="height:56px;" class="bg-dark rounded p-1">
+        </div>
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" name="remove_logo" id="remove_logo">
+          <label class="form-check-label" for="remove_logo">Remove current logo</label>
+        </div>
+        {% endif %}
+        <div class="mb-3">
+          <label class="form-label" for="site_logo">Menu bar logo (PNG, JPG, SVG)</label>
+          <input class="form-control" type="file" id="site_logo" name="site_logo" accept=".png,.jpg,.jpeg,.svg">
+        </div>
+        <button class="btn btn-primary">Save branding</button>
+      </form>
+    </div></div>
+
+    <div class="card shadow-sm"><div class="card-body">
+      <h2 class="h5">Troubleshooting</h2>
+      <p class="text-muted small">Manual triggers for the two background jobs. They
+      run on their own schedule automatically — these buttons just run them on
+      demand. <a href="{{ url_for('main.help_page') }}#background-jobs">Full details in Help &rarr; Admin &amp; Setup</a>.</p>
+
+      <div class="mb-3">
+        <form method="post" action="{{ url_for('admin.trigger_harvest') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-outline-primary">Run analytics harvest now</button>
+        </form>
+        <div class="form-text">
+          Pulls the latest click counts for your short links from Bitly and stores
+          them locally so the Stats pages are current. Normally runs every hour;
+          use this after creating a link if you don't want to wait for the next run.
+        </div>
+      </div>
+
+      <div>
+        <form method="post" action="{{ url_for('admin.trigger_cleanup') }}"
+              onsubmit="return confirm('Run retention cleanup now? Files and click data past their retention period will be deleted.');">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-outline-secondary">Run retention cleanup now</button>
+        </form>
+        <div class="form-text">
+          Deletes generated card/QR files and click records that are older than the
+          retention periods set below (File retention days / Analytics retention
+          days). Frees disk space. Normally runs once a day.
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="col-md-7">
+    <div class="card shadow-sm"><div class="card-body">
+      <h2 class="h5">App settings</h2>
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% for key, value in values.items() %}
+        <div class="mb-3">
+          <label class="form-label" for="s-{{ key }}">{{ key.replace('_', ' ') | title }}</label>
+          {% if value in ['true', 'false'] %}
+          <select class="form-select" id="s-{{ key }}" name="{{ key }}">
+            <option value="true" {% if value == 'true' %}selected{% endif %}>true</option>
+            <option value="false" {% if value == 'false' %}selected{% endif %}>false</option>
+          </select>
+          {% else %}
+          <input class="form-control" id="s-{{ key }}" name="{{ key }}" value="{{ value }}">
+          {% endif %}
+          <div class="form-text">{{ descriptions[key] }}</div>
+        </div>
+        {% endfor %}
+        <button class="btn btn-primary">Save settings</button>
+      </form>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

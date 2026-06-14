@@ -1,0 +1,171 @@
+/* App styles on top of Bootstrap — v2.5 branding & navigation */
+
+/* ── Fonts (served locally; downloaded at image build) ─────────────── */
+@font-face {
+  font-family: "Bebas Neue";
+  src: url("../fonts/BebasNeue-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("../fonts/Inter-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter";
+  src: url("../fonts/Inter-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-display: swap;
+}
+
+:root {
+  --brand-bar: #15294a;        /* navbar: darker than the card navy #1E395E */
+  --brand-bar-hover: #0e1d38;
+}
+
+/* ── Top bar: taller, darker, QR-block texture behind the brand ────── */
+.app-navbar {
+  background-color: var(--brand-bar);
+  min-height: 88px;            /* ≥150% of the default 56px bar */
+  position: relative;
+  z-index: 1030;               /* Bootstrap default navbar z-index */
+  /* NOTE: do NOT set overflow:hidden here — it clips dropdown menus */
+}
+/* Clip only the texture layer, not the whole navbar */
+.app-navbar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 520px;
+  max-width: 55%;
+  background: url("../img/qr-texture.svg") left center / cover no-repeat;
+  pointer-events: none;
+  /* Clip the SVG background to this element's box only */
+  overflow: hidden;
+}
+.app-navbar > .container-fluid {
+  position: relative;          /* keep content above the texture */
+  z-index: 1;
+}
+/* Ensure dropdown menus float above page content */
+.app-navbar .dropdown-menu {
+  z-index: 1031;
+}
+
+.brand-logo {
+  height: 56px;
+  width: auto;
+  margin-right: 0.9rem;
+}
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+.brand-title {
+  font-family: "Bebas Neue", "Arial Narrow", sans-serif;
+  font-size: 2.5rem;
+  letter-spacing: 0.05em;
+  line-height: 0.95;
+}
+.brand-subtitle {
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0.03em;
+  opacity: 0.85;
+  margin-top: 0.3rem;
+}
+
+.app-navbar .nav-link {
+  font-weight: 500;
+}
+/* A little breathing room between the top-level menu options (was tight). */
+@media (min-width: 992px) {
+  .app-navbar .navbar-nav > .nav-item {
+    margin-left: 0.55rem;
+  }
+  .app-navbar .navbar-nav > .nav-item > .nav-link {
+    padding-left: 0.65rem;
+    padding-right: 0.65rem;
+  }
+}
+/* Roomier dropdown rows too. */
+.app-navbar .dropdown-menu .dropdown-item {
+  padding-top: 0.45rem;
+  padding-bottom: 0.45rem;
+}
+/* Open menus on hover (desktop only) — no click needed. The small padding
+   bridge keeps the menu open while the cursor travels from link to menu. */
+@media (min-width: 992px) {
+  .app-navbar .nav-item.dropdown:hover > .dropdown-menu {
+    display: block;
+    margin-top: 0;
+  }
+  .app-navbar .nav-item.dropdown > .dropdown-toggle {
+    margin-bottom: 0;
+  }
+}
+.app-navbar .dropdown-menu {
+  border: 0;
+  box-shadow: 0 0.5rem 1rem rgba(10, 24, 48, 0.25);
+}
+
+/* ── Brand-colored buttons (create page modes + generate) ──────────── */
+.btn-brand {
+  background-color: var(--brand-bar);
+  border-color: var(--brand-bar);
+  color: #fff;
+}
+.btn-brand:hover,
+.btn-brand:focus {
+  background-color: var(--brand-bar-hover);
+  border-color: var(--brand-bar-hover);
+  color: #fff;
+}
+
+.btn-mode {
+  background-color: #fff;
+  border: 1px solid #ced4da;
+  color: #212529;
+}
+.btn-mode:hover {
+  border-color: var(--brand-bar);
+  color: var(--brand-bar);
+}
+.btn-check:checked + .btn-mode {
+  background-color: var(--brand-bar);
+  border-color: var(--brand-bar);
+  color: #fff;
+}
+/* Description line stays readable when the button is selected */
+.btn-check:checked + .btn-mode .text-muted {
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+
+/* ── Create page: option cards slide in on mode selection ──────────── */
+.mode-section {
+  transition: opacity 0.28s ease, transform 0.28s ease;
+}
+.mode-section.section-enter {
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+/* ── Misc ───────────────────────────────────────────────────────────── */
+.preview-img { max-height: 480px; }
+.color-dot {
+  display: inline-block;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  vertical-align: -0.1rem;
+  margin-right: 0.25rem;
+}
+.btn-check + .btn { white-space: normal; }
+.stat-card .display-6 { font-weight: 700; }

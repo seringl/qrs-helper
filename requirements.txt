@@ -1,0 +1,16 @@
+Flask>=3.0
+Flask-Login>=0.6
+Flask-SQLAlchemy>=3.1
+Flask-Migrate>=4.0
+Flask-WTF>=1.2
+Flask-Bcrypt>=1.0
+SQLAlchemy>=2.0
+python-dotenv>=1.0
+requests>=2.31
+Pillow>=10.0
+cairosvg>=2.7
+ldap3>=2.9
+APScheduler>=3.10
+gunicorn>=21.0
+psycopg2-binary>=2.9   # PostgreSQL only
+# pyodbc>=5.0          # MS SQL Server only - uncomment and add unixodbc + msodbcsql18 to the Dockerfile

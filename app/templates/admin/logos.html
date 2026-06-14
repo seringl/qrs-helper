@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Admin — Logos{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">Admin</h1>
+{% include "admin/_nav.html" %}
+<div class="row g-4">
+  <div class="col-md-4">
+    <div class="card shadow-sm"><div class="card-body">
+      <h2 class="h5">Upload logo</h2>
+      <form method="post" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-3">
+          <label class="form-label" for="name">Display name</label>
+          <input class="form-control" id="name" name="name" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="file">Image (PNG, JPG, SVG — max {{ config.MAX_CONTENT_LENGTH // 1048576 }} MB)</label>
+          <input class="form-control" type="file" id="file" name="file" accept=".png,.jpg,.jpeg,.svg" required>
+        </div>
+        <button class="btn btn-primary">Upload</button>
+      </form>
+    </div></div>
+  </div>
+  <div class="col-md-8">
+    <div class="card shadow-sm"><div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead><tr><th>Name</th><th>Default</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+        {% for l in logos %}
+        <tr class="{{ '' if l.is_active else 'table-secondary' }}">
+          <td>{{ l.name }}</td>
+          <td>{% if l.is_global_default %}<span class="badge text-bg-success">global default</span>{% endif %}</td>
+          <td>{{ 'active' if l.is_active else 'inactive' }}</td>
+          <td class="text-end">
+            <form method="post" action="{{ url_for('admin.update_logo', logo_id=l.id) }}" class="d-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-sm btn-outline-secondary" name="action" value="toggle">{{ 'Deactivate' if l.is_active else 'Activate' }}</button>
+              {% if not l.is_global_default and l.is_active %}
+              <button class="btn btn-sm btn-outline-success" name="action" value="default">Make default</button>
+              {% endif %}
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="text-center text-muted py-3">No logos uploaded yet. Upload one to enable logo-embedded QR codes.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

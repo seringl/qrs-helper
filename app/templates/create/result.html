@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Result — {{ r.title }}{% endblock %}
+{% block content %}
+<h1 class="h3 mb-1">{{ r.title }}</h1>
+<p class="text-muted">{{ r.generation_mode.replace('_', ' ') }} · created {{ r.created_at.strftime('%Y-%m-%d %H:%M') }} UTC</p>
+
+<div class="row g-4">
+  {% if r.png_path or r.qr_png_path %}
+  <div class="col-md-5">
+    <div class="card shadow-sm"><div class="card-body text-center">
+      <img src="{{ url_for('create.files', qr_id=r.id, kind='png' if r.png_path else 'qr_png') }}"
+           class="img-fluid rounded preview-img" alt="Preview of {{ r.title }}">
+    </div></div>
+  </div>
+  {% endif %}
+  <div class="col-md-7">
+    {% if r.short_url %}
+    <div class="card shadow-sm mb-3"><div class="card-body">
+      <label class="form-label fw-bold">Short link</label>
+      <div class="input-group">
+        <input class="form-control" id="short-url" value="{{ r.short_url }}" readonly>
+        <button class="btn btn-outline-primary" type="button" onclick="copyShort()">Copy</button>
+      </div>
+      <div class="form-text">Points to: {{ r.long_url }}</div>
+    </div></div>
+    {% else %}
+    <div class="card shadow-sm mb-3"><div class="card-body">
+      <label class="form-label fw-bold">Destination</label>
+      <div>{{ r.long_url }}</div>
+    </div></div>
+    {% endif %}
+
+    {% if r.zip_path %}
+    <div class="card shadow-sm"><div class="card-body">
+      <label class="form-label fw-bold">Downloads</label>
+      <div class="d-grid gap-2">
+        <a class="btn btn-primary" href="{{ url_for('create.files', qr_id=r.id, kind='zip') }}">Download everything (ZIP)</a>
+        <div class="btn-group">
+          {% if r.png_path %}<a class="btn btn-outline-secondary" href="{{ url_for('create.files', qr_id=r.id, kind='png') }}">Card PNG</a>{% endif %}
+          {% if r.svg_path %}<a class="btn btn-outline-secondary" href="{{ url_for('create.files', qr_id=r.id, kind='svg') }}">Card SVG</a>{% endif %}
+          {% if r.qr_png_path %}<a class="btn btn-outline-secondary" href="{{ url_for('create.files', qr_id=r.id, kind='qr_png') }}">QR PNG</a>{% endif %}
+          {% if r.qr_svg_path %}<a class="btn btn-outline-secondary" href="{{ url_for('create.files', qr_id=r.id, kind='qr_svg') }}">QR SVG</a>{% endif %}
+        </div>
+      </div>
+    </div></div>
+    {% endif %}
+
+    <div class="mt-3">
+      <a href="{{ url_for('create.create') }}" class="btn btn-link">Create another</a>
+      <a href="{{ url_for('history.index') }}" class="btn btn-link">My history</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function copyShort() {
+    const el = document.getElementById('short-url');
+    el.select();
+    navigator.clipboard.writeText(el.value);
+  }
+</script>
+{% endblock %}

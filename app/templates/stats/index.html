@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Stats{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h3 mb-0">Analytics
+    {% if scope_all %}<span class="badge text-bg-info">all users</span>
+    {% elif scope_me %}<span class="badge text-bg-secondary">my data</span>{% endif %}
+  </h1>
+  <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('stats.export_csv') }}">Export CSV</a>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-8">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <h2 class="h6 text-muted">Clicks — last 30 days ({{ total_clicks }} total all-time)</h2>
+      <canvas id="trend"></canvas>
+    </div></div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <h2 class="h6 text-muted">Devices</h2>
+      <canvas id="devices"></canvas>
+    </div></div>
+  </div>
+</div>
+<div class="row g-4 mb-4">
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <h2 class="h6 text-muted">Countries</h2>
+      <canvas id="countries"></canvas>
+    </div></div>
+  </div>
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100"><div class="card-body">
+      <h2 class="h6 text-muted">Referrers</h2>
+      <table class="table table-sm mb-0">
+        <tbody>
+        {% for name, count in data.referrers %}
+          <tr><td>{{ name }}</td><td class="text-end">{{ count }}</td></tr>
+        {% else %}
+          <tr><td class="text-muted">No click data harvested yet.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div></div>
+  </div>
+</div>
+
+<div class="card shadow-sm"><div class="card-body">
+  <h2 class="h6 text-muted">Links — drill down</h2>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead><tr><th>Title</th><th>Short URL</th><th>Created</th><th></th></tr></thead>
+      <tbody>
+      {% for l in links %}
+        <tr>
+          <td>{{ l.title }}</td>
+          <td>{{ l.short_url }}</td>
+          <td>{{ l.created_at.strftime('%Y-%m-%d') }}</td>
+          <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('stats.link_detail', qr_id=l.id) }}">Details</a></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="4" class="text-muted text-center py-3">No tracked links yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/chart.umd.min.js') }}"></script>
+<script>
+  const D = {{ data | tojson }};
+  new Chart(document.getElementById('trend'), {
+    type: 'line',
+    data: { labels: D.trend_labels, datasets: [{ label: 'Clicks', data: D.trend_values, borderColor: '#1E395E', tension: .25, fill: false }] },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+  });
+  new Chart(document.getElementById('devices'), {
+    type: 'doughnut',
+    data: { labels: D.devices.map(x => x[0]), datasets: [{ data: D.devices.map(x => x[1]) }] }
+  });
+  new Chart(document.getElementById('countries'), {
+    type: 'bar',
+    data: { labels: D.countries.map(x => x[0]), datasets: [{ label: 'Clicks', data: D.countries.map(x => x[1]), backgroundColor: '#1E395E' }] },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Create{% endblock %}
+{% block content %}
+<h1 class="h3 mb-4">Create</h1>
+<form method="post" id="create-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% if offer_fallback %}
+  <input type="hidden" name="skip_bitly_fallback" value="1">
+  <div class="alert alert-warning">
+    Submitting again will <strong>skip the short link</strong> and embed the original URL in the QR code.
+  </div>
+  {% endif %}
+
+  <div class="card shadow-sm mb-4"><div class="card-body">
+    <label class="form-label fw-bold">What do you want to create?</label>
+    <div class="row g-2 mb-3">
+      {% set selected_mode = form.get('mode') if form else (preselect or 'full_card') %}
+      {% for value, label, hint in [
+        ('shortlink_only', 'Short link only', 'Just a Bitly short link'),
+        ('qr_only', 'QR code only', 'Styled QR code, no short link'),
+        ('full_card', 'Full card', 'Short link + QR + print-ready card')] %}
+      <div class="col-md-4">
+        <input type="radio" class="btn-check" name="mode" id="mode-{{ value }}" value="{{ value }}"
+               {% if selected_mode == value %}checked{% endif %} required>
+        <label class="btn btn-mode w-100 text-start" for="mode-{{ value }}">
+          <strong>{{ label }}</strong><br><small class="text-muted">{{ hint }}</small>
+        </label>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label" for="title">Title</label>
+      <input class="form-control" id="title" name="title" value="{{ form.get('title', '') if form else '' }}" required
+             placeholder="e.g. Summer Concert Series flyer">
+    </div>
+    <div class="mb-3">
+      <label class="form-label" for="long_url">Destination URL</label>
+      <input class="form-control" type="url" id="long_url" name="long_url" required
+             value="{{ form.get('long_url', '') if form else '' }}" placeholder="https://example.org/page">
+    </div>
+  </div></div>
+
+  <div class="card shadow-sm mb-4 mode-section" data-modes="shortlink_only,full_card"><div class="card-body">
+    <h2 class="h5">Short link options</h2>
+    <div class="mb-3">
+      <label class="form-label" for="bitly_domain_id">Bitly domain</label>
+      <select class="form-select" id="bitly_domain_id" name="bitly_domain_id">
+        {% for d in domains %}
+        <option value="{{ d.id }}" {% if d.is_default %}selected{% endif %}>{{ d.domain }}{% if d.is_default %} (default){% endif %}</option>
+        {% endfor %}
+        {% if allow_default_domain %}
+        <option value="default" {% if not domains %}selected{% endif %}>bit.ly (Bitly default)</option>
+        {% endif %}
+      </select>
+      {% if not domains and not allow_default_domain %}
+      <div class="form-text text-danger">No domains are configured. Ask an administrator to add a Bitly domain.</div>
+      {% endif %}
+    </div>
+    {% if current_user.can_custom_backhalves %}
+    <div class="mb-3">
+      <label class="form-label" for="custom_backhalf">Custom back-half <span class="text-muted">(optional)</span></label>
+      <div class="input-group">
+        <span class="input-group-text">/</span>
+        <input class="form-control" id="custom_backhalf" name="custom_backhalf"
+               value="{{ form.get('custom_backhalf', '') if form else '' }}"
+               placeholder="SummerConcerts" pattern="[A-Za-z0-9_-]+">
+      </div>
+    </div>
+    {% endif %}
+  </div></div>
+
+  <div class="card shadow-sm mb-4 mode-section" data-modes="qr_only,full_card"><div class="card-body">
+    <h2 class="h5">QR code options</h2>
+    <div class="mb-3">
+      <label class="form-label" for="logo_id">Logo</label>
+      <select class="form-select" id="logo_id" name="logo_id">
+        <option value="">No logo</option>
+        {% for l in logos %}
+        <option value="{{ l.id }}"
+          {% if form and form.get('logo_id') == l.id|string %}selected
+          {% elif not form and (current_user.default_logo_id == l.id or (not current_user.default_logo_id and l.is_global_default)) %}selected{% endif %}>
+          {{ l.name }}{% if l.is_global_default %} (default){% endif %}
+        </option>
+        {% endfor %}
+      </select>
+      {% if not logos %}
+      <div class="form-text text-warning">No logos are configured. Upload one under Admin → Logos.</div>
+      {% endif %}
+    </div>
+    <div class="mb-3">
+      <label class="form-label" for="card_template_id">Card template</label>
+      <select class="form-select" id="card_template_id" name="card_template_id">
+        {% for t in templates %}
+        <option value="{{ t.id }}"
+          {% if form and form.get('card_template_id') == t.id|string %}selected
+          {% elif not form and (current_user.default_card_template_id == t.id or (not current_user.default_card_template_id and t.is_default)) %}selected{% endif %}>
+          {{ t.name }}{% if t.is_default %} (default){% endif %}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+  </div></div>
+
+  <div class="card shadow-sm mb-4 mode-section" data-modes="qr_only,full_card"><div class="card-body">
+    <h2 class="h5">Card options</h2>
+    <div class="form-check mb-2">
+      <input class="form-check-input" type="checkbox" id="edit_cta" name="edit_cta" value="1"
+             {% if form and form.get('edit_cta') %}checked{% endif %}>
+      <label class="form-check-label" for="edit_cta">Change the call-to-action text</label>
+    </div>
+    <div class="mb-3" id="cta-wrap" style="display:none;">
+      <input class="form-control" name="cta_text" value="{{ form.get('cta_text', '') if form else '' }}"
+             placeholder="Scan for more info!">
+    </div>
+  </div></div>
+
+  <button class="btn btn-brand btn-lg">Generate</button>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function syncSections(animate) {
+    const mode = document.querySelector('input[name="mode"]:checked');
+    document.querySelectorAll('.mode-section').forEach(sec => {
+      const show = mode && sec.dataset.modes.split(',').includes(mode.value);
+      const wasHidden = sec.style.display === 'none';
+      sec.style.display = show ? '' : 'none';
+      sec.querySelectorAll('select, input').forEach(el => el.disabled = !show);
+      if (show && wasHidden && animate) {
+        // slide-in: start offset/transparent, then transition to rest
+        sec.classList.add('section-enter');
+        requestAnimationFrame(() => requestAnimationFrame(() => sec.classList.remove('section-enter')));
+      }
+    });
+  }
+  function syncCta() {
+    const on = document.getElementById('edit_cta');
+    document.getElementById('cta-wrap').style.display = (on && on.checked) ? '' : 'none';
+  }
+  document.querySelectorAll('input[name="mode"]').forEach(r => r.addEventListener('change', () => syncSections(true)));
+  const ctaBox = document.getElementById('edit_cta');
+  if (ctaBox) ctaBox.addEventListener('change', syncCta);
+  syncSections(false); syncCta();
+</script>
+{% endblock %}

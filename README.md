@@ -57,13 +57,6 @@ Generate a `SECRET_KEY` with:
 python3 -c "import secrets; print(secrets.token_hex(32))"
 ```
 
-## Documentation
-
-- **SERVER_INSTALL_GUIDE.md** — step-by-step server install, updates, backups,
-  and troubleshooting.
-- **DESIGN.md** — full technical design (architecture, database schema, APIs,
-  card spec, security).
-
 ## External services
 
 - **Bitly** (required) — short links + click analytics. You supply your own token.
@@ -79,5 +72,4 @@ docker compose exec app pytest
 
 ## License
 
-Add your chosen license here (MIT is a common, permissive choice). See
-PUBLISHING_GUIDE.md for guidance.
+MIT License. See [LICENSE](LICENSE) for details.

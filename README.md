@@ -4,8 +4,6 @@ A self-hosted web app for creating branded **QR codes**, **Bitly short links**,
 and **print-ready cards** from a single form. Built with Flask and packaged to
 run entirely in Docker — the only thing you install is Docker itself.
 
-> Replace the placeholders below (your name/org and repo URL) before publishing.
-
 ## What it does
 
 - **Full card** — creates a Bitly short link, a branded QR code (logo embedded

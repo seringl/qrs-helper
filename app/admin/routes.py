@@ -58,9 +58,10 @@ EYE_TRANSFORMS = [
 ]
 
 _EYE_KEYS = [
-    ("erf1", "Upper-left frame"), ("erf1b", "Upper-left ball"),
-    ("erf2", "Upper-right frame"), ("erf2b", "Upper-right ball"),
-    ("erf3", "Lower-left frame"), ("erf3b", "Lower-left ball"),
+    # erf = eye frame rotation, brf = eye ball rotation — qrcode-monkey.com/qr-code-api-with-logo/
+    ("erf1", "Upper-left frame"), ("brf1", "Upper-left ball"),
+    ("erf2", "Upper-right frame"), ("brf2", "Upper-right ball"),
+    ("erf3", "Lower-left frame"), ("brf3", "Lower-left ball"),
 ]
 
 
@@ -78,11 +79,11 @@ def _parse_form_to_style(form):
         "eyeColor": form.get("eyeColor", DEFAULT_QR_STYLE["eyeColor"]),
         "eyeBallColor": form.get("eyeBallColor", DEFAULT_QR_STYLE["eyeBallColor"]),
         "erf1": transforms("erf1"),
-        "erf1b": transforms("erf1b"),
         "erf2": transforms("erf2"),
-        "erf2b": transforms("erf2b"),
         "erf3": transforms("erf3"),
-        "erf3b": transforms("erf3b"),
+        "brf1": transforms("brf1"),
+        "brf2": transforms("brf2"),
+        "brf3": transforms("brf3"),
         "ecLevel": form.get("ecLevel", DEFAULT_QR_STYLE["ecLevel"]),
         "gradientEnabled": form.get("gradientEnabled") == "on",
         "gradientColor1": form.get("gradientColor1", DEFAULT_QR_STYLE["gradientColor1"]),

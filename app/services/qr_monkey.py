@@ -42,12 +42,14 @@ DEFAULT_QR_STYLE = {
     "bgColor": "#FFFFFF",
     "eyeColor": "#1E395E",
     "eyeBallColor": "#1E395E",
+    # Eye *frame* rotation: erf1/erf2/erf3 (per qrcode-monkey.com/qr-code-api-with-logo/)
     "erf1": ["fh"],
-    "erf1b": ["fh"],
     "erf2": [],
-    "erf2b": [],
     "erf3": [],
-    "erf3b": [],
+    # Eye *ball* rotation: brf1/brf2/brf3 (per qrcode-monkey.com/qr-code-api-with-logo/)
+    "brf1": ["fh"],
+    "brf2": [],
+    "brf3": [],
     "ecLevel": "M",
     "gradientEnabled": False,
     "gradientColor1": "#1E395E",
@@ -70,8 +72,9 @@ QR_STYLE = {
     "eyeBall1Color": "#1E395E",
     "eyeBall2Color": "#1E395E",
     "eyeBall3Color": "#1E395E",
+    # Eye frame rotation (erf) and eye ball rotation (brf) — qrcode-monkey.com/qr-code-api-with-logo/
     "erf1": ["fh"],
-    "erf1b": ["fh"],
+    "brf1": ["fh"],
 }
 
 BODY_COLOR = QR_STYLE["bodyColor"]
@@ -104,7 +107,9 @@ def build_config(style):
         "eyeBall3Color": ball_color,
     }
 
-    for key in ("erf1", "erf1b", "erf2", "erf2b", "erf3", "erf3b"):
+    # Eye frame rotation: erf1/erf2/erf3; eye ball rotation: brf1/brf2/brf3
+    # Parameter names confirmed at qrcode-monkey.com/qr-code-api-with-logo/
+    for key in ("erf1", "erf2", "erf3", "brf1", "brf2", "brf3"):
         val = s.get(key, [])
         if isinstance(val, list) and val:
             cfg[key] = val

@@ -1,4 +1,5 @@
 """Create blueprint: /create, /result/<id>, /files/<id>/<kind> — §12."""
+import json
 import os
 import re
 from urllib.parse import urlparse
@@ -10,9 +11,20 @@ from flask import (
 from flask_login import current_user, login_required
 
 from .. import db
-from ..models import BitlyDomain, CardTemplate, Logo, QRCode, get_setting_bool
-from ..services import bitly, card_composer, packaging, qr_monkey
+from ..models import BitlyDomain, CardTemplate, Logo, QRCode, get_setting, get_setting_bool
+from ..services import bitly, card_composer, packaging, qr_local, qr_monkey
 from ..utils import role_required
+
+
+def _get_qr_method_and_style():
+    """Return (method_str, style_dict) from the current admin QR design settings."""
+    method = get_setting("qr_method") or "qrcode_monkey"
+    raw = get_setting("qr_style_json")
+    try:
+        style = json.loads(raw) if raw else {}
+    except (json.JSONDecodeError, TypeError):
+        style = {}
+    return method, style
 
 bp = Blueprint("create", __name__)
 
@@ -57,6 +69,7 @@ def create():
     title = form.get("title", "").strip()
     long_url = form.get("long_url", "").strip()
     skip_bitly_fallback = form.get("skip_bitly_fallback") == "1"
+    qr_method, qr_style = _get_qr_method_and_style()
 
     # ── validation ──────────────────────────────────────────────────────
     errors = []
@@ -107,7 +120,7 @@ def create():
         logo = db.session.get(Logo, int(logo_id)) if logo_id else None
         if logo is not None and not logo.is_active:
             logo = None
-        if mode == "full_card" and logo is None:
+        if mode == "full_card" and logo is None and qr_method != "local":
             errors.append("Choose a logo for the QR code.")
         # Both qr_only and full_card produce a framed text card, so both get a
         # CTA line. Default from the template; user may opt in to edit it.
@@ -164,42 +177,60 @@ def create():
     if mode == "shortlink_only":
         return redirect(url_for("create.result", qr_id=record.id))
 
-    # ── QR generation (qr_only / full_card) — §8.2/§8.3 ─────────────────
-    # The logo is embedded by QRCode Monkey: upload it once for a token
-    # (reused on later runs), then request the QR as a high-res PNG and a
-    # vector SVG, delivered exactly as the API returns them. Both modes then
-    # also build the full framed card (CTA + destination/short URL).
+    # ── QR generation (qr_only / full_card) ──────────────────────────────
     qr_data = short_url or long_url
     url_text = short_url or long_url
     out_dir = os.path.join(current_app.config["OUTPUT_FOLDER"], f"qr_{record.id}")
     os.makedirs(out_dir, exist_ok=True)
     try:
-        logo_path = None
-        token = None
-        if logo is not None:
-            logo_path = os.path.join(
-                current_app.config["UPLOAD_FOLDER"], logo.filename
-            )
-            token = qr_monkey.get_logo_token(logo, logo_path)
-
-        def _fetch():
-            svg_bytes, cfg = qr_monkey.generate(
-                qr_data, "svg", qr_monkey.SVG_SIZE, logo_token=token
-            )
-            png_bytes_, _ = qr_monkey.generate(
-                qr_data, "png", qr_monkey.PNG_SIZE, logo_token=token
-            )
-            return svg_bytes, png_bytes_, cfg
-
-        try:
-            qr_svg_bytes, qr_png_bytes, config = _fetch()
-        except qr_monkey.QRMonkeyError:
-            # A cached logo token may have expired — re-upload once and retry.
+        if qr_method == "local":
+            # Local mode: logos not supported — warn if one was selected.
             if logo is not None:
-                token = qr_monkey.refresh_logo_token(logo, logo_path)
+                flash(
+                    "Logo embedding is not available in local QR generation mode; "
+                    "the QR code will be generated without a logo.",
+                    "warning",
+                )
+
+            def _fetch():
+                svg_b, cfg = qr_local.generate(
+                    qr_data, "svg", qr_monkey.SVG_SIZE, style=qr_style
+                )
+                png_b, _ = qr_local.generate(
+                    qr_data, "png", qr_monkey.PNG_SIZE, style=qr_style
+                )
+                return svg_b, png_b, cfg
+
+            qr_svg_bytes, qr_png_bytes, config = _fetch()
+        else:
+            # QRCode Monkey path: upload logo once for a token, reuse on retries.
+            logo_path = None
+            token = None
+            if logo is not None:
+                logo_path = os.path.join(
+                    current_app.config["UPLOAD_FOLDER"], logo.filename
+                )
+                token = qr_monkey.get_logo_token(logo, logo_path)
+
+            def _fetch():
+                svg_b, cfg = qr_monkey.generate(
+                    qr_data, "svg", qr_monkey.SVG_SIZE,
+                    logo_token=token, style=qr_style
+                )
+                png_b, _ = qr_monkey.generate(
+                    qr_data, "png", qr_monkey.PNG_SIZE,
+                    logo_token=token, style=qr_style
+                )
+                return svg_b, png_b, cfg
+
+            try:
                 qr_svg_bytes, qr_png_bytes, config = _fetch()
-            else:
-                raise
+            except qr_monkey.QRMonkeyError:
+                if logo is not None:
+                    token = qr_monkey.refresh_logo_token(logo, logo_path)
+                    qr_svg_bytes, qr_png_bytes, config = _fetch()
+                else:
+                    raise
 
         record.qr_config_json = qr_monkey.config_snapshot(
             config, qr_data, qr_monkey.PNG_SIZE
@@ -239,6 +270,7 @@ def create():
         db.session.commit()
     except (
         qr_monkey.QRMonkeyError,
+        qr_local.QRLocalError,
         card_composer.ComposeError,
         OSError,
     ) as exc:

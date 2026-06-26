@@ -12,5 +12,6 @@ cairosvg>=2.7
 ldap3>=2.9
 APScheduler>=3.10
 gunicorn>=21.0
+segno>=1.6
 psycopg2-binary>=2.9   # PostgreSQL only
 # pyodbc>=5.0          # MS SQL Server only - uncomment and add unixodbc + msodbcsql18 to the Dockerfile

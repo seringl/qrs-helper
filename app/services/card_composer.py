@@ -29,7 +29,7 @@ PANEL_H = 1050                          # white QR panel height
 TEXT_TARGET_W = PANEL_W - 80            # auto-size target width (1015)
 
 # Default sizing fallbacks (used when a template predates the sizing columns).
-DEFAULT_QR_SIZE = 880
+DEFAULT_QR_SIZE = 980
 DEFAULT_CTA_Y = 1320
 DEFAULT_URL_Y = 1480
 

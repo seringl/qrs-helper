@@ -38,10 +38,11 @@ docker compose up --build -d
 The first build downloads the base image, Python packages, and fonts (Inter +
 Bebas Neue) — a few minutes. After that, startups take seconds.
 
-Get the one-time admin password from the log:
+Get the one-time admin password — it is saved to
+`instance/INITIAL_ADMIN_PASSWORD.txt` and also printed to the container log:
 
 ```bash
-docker compose logs app | grep -A 3 "Initial admin"
+docker compose logs app | grep "Temporary password"
 ```
 
 Then open `https://your-server-address` (a self-signed certificate is generated
@@ -55,10 +56,25 @@ Generate a `SECRET_KEY` with:
 python3 -c "import secrets; print(secrets.token_hex(32))"
 ```
 
+## QR code generation
+
+Two methods are available, selectable in **Admin → QR Design**:
+
+- **QRCode-Monkey.com API** (default) — produces fully styled, branded QR codes
+  with custom module shapes, eye shapes, per-eye colors, gradients, and logo
+  embedding. Requires an outbound HTTPS connection to the free API.
+- **Local generation (segno)** — generates QR codes entirely on-server with no
+  external API call. Supports body color, background color, and error correction
+  level; shape and logo options are not available in this mode.
+
+The QR Design settings page also includes a live preview so you can verify the
+style before saving.
+
 ## External services
 
 - **Bitly** (required) — short links + click analytics. You supply your own token.
-- **QRCode Monkey** (free, no key) — QR styling and logo embedding.
+- **QRCode Monkey** (optional, default QR method) — QR styling and logo embedding.
+  Switch to local generation in Admin → QR Design if you prefer no external calls.
 - **Dinopass** (optional) — memorable first-run admin password; falls back to a
   local random password if unreachable.
 

@@ -32,25 +32,7 @@ if [ -d migrations ]; then
 fi
 flask init-app
 
-# 3b. If a brand-new admin account was just created, surface its one-time
-#     password prominently here — the very last thing before the server
-#     starts — so it's easy to spot even with `docker compose up -d` logs.
-PW_FILE=instance/INITIAL_ADMIN_PASSWORD.txt
-if [ -f "$PW_FILE" ]; then
-  echo ""
-  echo "############################################################"
-  echo "#                                                          #"
-  echo "#   INITIAL ADMIN LOGIN  (one time — change on first login) #"
-  echo "#                                                          #"
-  while IFS= read -r line; do echo "#   $line"; done < "$PW_FILE"
-  echo "#                                                          #"
-  echo "#   Saved at: $PW_FILE"
-  echo "#   (this file is removed automatically after you reset it) #"
-  echo "############################################################"
-  echo ""
-fi
-
-# 4. Start the server (§16.2 — Gunicorn in production, dev server otherwise)
+# 3b. Start the server (§16.2 — Gunicorn in production, dev server otherwise)
 if [ "$FLASK_ENV" = "development" ]; then
   echo "Starting Flask development server (FLASK_ENV=development)…"
   exec flask run --host 0.0.0.0 --port 5000

@@ -93,8 +93,8 @@ def _dinopass_password():
 # databases upgrade in place. (Production installs use `flask db upgrade`.)
 _ADDED_COLUMNS = {
     "card_templates": {
-        "inner_corner_radius_px": "INTEGER NOT NULL DEFAULT 30",
-        "qr_size_px": "INTEGER NOT NULL DEFAULT 880",
+        "inner_corner_radius_px": "INTEGER NOT NULL DEFAULT 60",
+        "qr_size_px": "INTEGER NOT NULL DEFAULT 980",
         "cta_baseline_y": "INTEGER NOT NULL DEFAULT 1320",
         "url_baseline_y": "INTEGER NOT NULL DEFAULT 1480",
     },
@@ -172,8 +172,8 @@ def initialize(app):
                     text_color="#FFFFFF",
                     corner_style="rounded",
                     corner_radius_px=120,
-                    inner_corner_radius_px=30,
-                    qr_size_px=880,
+                    inner_corner_radius_px=60,
+                    qr_size_px=980,
                     cta_baseline_y=1320,
                     url_baseline_y=1480,
                     default_cta_text="Scan for more info!",

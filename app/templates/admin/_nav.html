@@ -2,7 +2,8 @@
   {% for endpoint, label in [
     ('admin.users', 'Users'), ('admin.logos', 'Logos'),
     ('admin.templates', 'Card Templates'), ('admin.domains', 'Bitly Domains'),
-    ('admin.settings', 'App Settings'), ('admin.history', 'All History')] %}
+    ('admin.qr_design', 'QR Design'), ('admin.settings', 'App Settings'),
+    ('admin.history', 'All History')] %}
   <li class="nav-item">
     <a class="nav-link {% if request.endpoint == endpoint or (endpoint == 'admin.templates' and request.endpoint == 'admin.edit_template') %}active{% endif %}"
        href="{{ url_for(endpoint) }}">{{ label }}</a>

@@ -1,11 +1,12 @@
 """Admin blueprint: users, logos, card templates, domains, settings — §11."""
+import json
 import os
 import re
 import uuid
 
 from flask import (
-    Blueprint, abort, current_app, flash, redirect, render_template, request,
-    url_for,
+    Blueprint, Response, abort, current_app, flash, redirect, render_template,
+    request, url_for,
 )
 from flask_login import current_user, login_required
 
@@ -15,8 +16,91 @@ from ..models import (
     SETTING_DEFAULTS, SETTING_DESCRIPTIONS, get_setting, set_setting,
 )
 from ..services.analytics_harvester import cleanup_retention, harvest_all
+from ..services.qr_monkey import DEFAULT_QR_STYLE
 from ..services.setup_service import _dinopass_password
 from ..utils import role_required
+
+# ── QR design constants ──────────────────────────────────────────────────────
+
+BODY_SHAPES = [
+    ("square", "Square"), ("mosaic", "Mosaic"), ("dot", "Dot"),
+    ("circle", "Circle (ring)"), ("circle-zebra", "Circle zebra"),
+    ("circle-zebra-vertical", "Circle zebra vertical"),
+    ("circular", "Circular"), ("edge-cut", "Edge cut"),
+    ("edge-cut-smooth", "Edge cut smooth"), ("japanesse", "Japanese"),
+    ("japanesse-circular", "Japanese circular"), ("sharp", "Sharp"),
+    ("sharp-smooth", "Sharp smooth"), ("diamond", "Diamond"),
+    ("diamond-small", "Diamond small"), ("star", "Star"), ("heart", "Heart"),
+    ("pointed", "Pointed"), ("pointed-in", "Pointed in"),
+    ("pointed-out", "Pointed out"), ("pointed-edge-cut", "Pointed edge cut"),
+    ("wave", "Wave"), ("spike", "Spike"),
+]
+
+EYE_FRAMES = [
+    ("frame0", "0 — plain square"), ("frame1", "1"), ("frame2", "2 — corner tab"),
+    ("frame3", "3 — rounded"), ("frame4", "4 — circle"), ("frame5", "5 — leaf"),
+    ("frame6", "6"), ("frame7", "7 — arrow"), ("frame8", "8 — diamond"),
+    ("frame10", "10"), ("frame11", "11"), ("frame12", "12"),
+    ("frame13", "13"), ("frame14", "14"), ("frame16", "16"),
+]
+
+EYE_BALLS = [
+    ("ball0", "0 — plain square"), ("ball1", "1"), ("ball2", "2 — corner tab"),
+    ("ball3", "3 — rounded"), ("ball4", "4 — circle"), ("ball5", "5 — leaf"),
+    ("ball6", "6"), ("ball7", "7"), ("ball8", "8 — diamond"),
+    ("ball10", "10"), ("ball11", "11"), ("ball12", "12"),
+    ("ball13", "13"), ("ball14", "14"), ("ball15", "15"),
+]
+
+EYE_TRANSFORMS = [
+    ("fh", "Flip horizontal"), ("fv", "Flip vertical"),
+    ("r90", "Rotate 90°"), ("r180", "Rotate 180°"), ("r270", "Rotate 270°"),
+]
+
+_EYE_KEYS = [
+    ("erf1", "Upper-left frame"), ("erf1b", "Upper-left ball"),
+    ("erf2", "Upper-right frame"), ("erf2b", "Upper-right ball"),
+    ("erf3", "Lower-left frame"), ("erf3b", "Lower-left ball"),
+]
+
+
+def _parse_form_to_style(form):
+    """Build a qr_style dict from a form submission."""
+    def transforms(prefix):
+        return [t for t, _ in EYE_TRANSFORMS if form.get(f"{prefix}_{t}") == "on"]
+
+    return {
+        "body": form.get("body", DEFAULT_QR_STYLE["body"]),
+        "eye": form.get("eye", DEFAULT_QR_STYLE["eye"]),
+        "eyeBall": form.get("eyeBall", DEFAULT_QR_STYLE["eyeBall"]),
+        "bodyColor": form.get("bodyColor", DEFAULT_QR_STYLE["bodyColor"]),
+        "bgColor": form.get("bgColor", DEFAULT_QR_STYLE["bgColor"]),
+        "eyeColor": form.get("eyeColor", DEFAULT_QR_STYLE["eyeColor"]),
+        "eyeBallColor": form.get("eyeBallColor", DEFAULT_QR_STYLE["eyeBallColor"]),
+        "erf1": transforms("erf1"),
+        "erf1b": transforms("erf1b"),
+        "erf2": transforms("erf2"),
+        "erf2b": transforms("erf2b"),
+        "erf3": transforms("erf3"),
+        "erf3b": transforms("erf3b"),
+        "ecLevel": form.get("ecLevel", DEFAULT_QR_STYLE["ecLevel"]),
+        "gradientEnabled": form.get("gradientEnabled") == "on",
+        "gradientColor1": form.get("gradientColor1", DEFAULT_QR_STYLE["gradientColor1"]),
+        "gradientColor2": form.get("gradientColor2", DEFAULT_QR_STYLE["gradientColor2"]),
+        "gradientType": form.get("gradientType", DEFAULT_QR_STYLE["gradientType"]),
+        "gradientOnEyes": form.get("gradientOnEyes") == "on",
+    }
+
+
+def _load_qr_style():
+    """Return the current qr_style dict from app settings, falling back to defaults."""
+    raw = get_setting("qr_style_json")
+    if raw:
+        try:
+            return json.loads(raw)
+        except (json.JSONDecodeError, TypeError):
+            pass
+    return dict(DEFAULT_QR_STYLE)
 
 bp = Blueprint("admin", __name__)
 
@@ -244,7 +328,7 @@ def _template_from_form(tpl):
 
     radius = _clamp("corner_radius_px", 120, 0, 300)
     inner_radius = _clamp("inner_corner_radius_px", 30, 0, 300)
-    qr_size = _clamp("qr_size_px", 880, 400, 1050)
+    qr_size = _clamp("qr_size_px", 980, 400, 1050)
     cta_y = _clamp("cta_baseline_y", 1320, 1150, 1640)
     url_y = _clamp("url_baseline_y", 1480, 1150, 1640)
 
@@ -392,3 +476,56 @@ def trigger_cleanup():
 def history():
     rows = QRCode.query.order_by(QRCode.created_at.desc()).limit(500).all()
     return render_template("admin/history.html", rows=rows)
+
+
+# ── QR design settings ───────────────────────────────────────────────────────
+@bp.route("/qr-design", methods=["GET", "POST"])
+@login_required
+@role_required("admin")
+def qr_design():
+    if request.method == "POST":
+        method = request.form.get("qr_method", "qrcode_monkey")
+        if method not in ("qrcode_monkey", "local"):
+            method = "qrcode_monkey"
+        style = _parse_form_to_style(request.form)
+        set_setting("qr_method", method)
+        set_setting("qr_style_json", json.dumps(style))
+        flash("QR design settings saved.", "success")
+        return redirect(url_for("admin.qr_design"))
+
+    qr_method = get_setting("qr_method") or "qrcode_monkey"
+    qr_style = _load_qr_style()
+    return render_template(
+        "admin/qr_design.html",
+        qr_method=qr_method,
+        s=qr_style,
+        body_shapes=BODY_SHAPES,
+        eye_frames=EYE_FRAMES,
+        eye_balls=EYE_BALLS,
+        eye_transforms=EYE_TRANSFORMS,
+        eye_keys=_EYE_KEYS,
+    )
+
+
+@bp.route("/qr-design/preview", methods=["POST"])
+@login_required
+@role_required("admin")
+def qr_design_preview():
+    """Return a small PNG preview of the current form state (not yet saved)."""
+    from ..services import qr_local, qr_monkey as qrm
+
+    method = request.form.get("qr_method", "qrcode_monkey")
+    style = _parse_form_to_style(request.form)
+    preview_url = (request.form.get("preview_url") or "https://qrstandards.com").strip()
+    if not preview_url:
+        preview_url = "https://qrstandards.com"
+
+    try:
+        if method == "local":
+            content, _ = qr_local.generate(preview_url, "png", 400, style=style)
+        else:
+            content, _ = qrm.generate(preview_url, "png", 400, style=style)
+    except (qr_local.QRLocalError, qrm.QRMonkeyError) as exc:
+        return str(exc), 502
+
+    return Response(content, mimetype="image/png")

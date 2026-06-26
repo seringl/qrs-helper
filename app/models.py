@@ -83,9 +83,9 @@ class CardTemplate(db.Model):
     # Outer card corner radius (px). Inner panel radius is now independent
     # (was auto = outer - frame) so admins can tune both corners. §9.3
     corner_radius_px = db.Column(db.Integer, nullable=False, default=120)
-    inner_corner_radius_px = db.Column(db.Integer, nullable=False, default=30)
+    inner_corner_radius_px = db.Column(db.Integer, nullable=False, default=60)
     # QR size (px) centred within the white panel frame. §9.2
-    qr_size_px = db.Column(db.Integer, nullable=False, default=880)
+    qr_size_px = db.Column(db.Integer, nullable=False, default=980)
     # Vertical baseline (px from the top of the 1650-px card) for each text
     # line. Admins slide these up/down to taste. §9.2/§9.4
     cta_baseline_y = db.Column(db.Integer, nullable=False, default=1320)
@@ -180,8 +180,8 @@ SETTING_DEFAULTS = {
     "site_subtitle": "QR & Shortlink Generator",
     "session_expiry_days": "0",
     "file_retention_days": "365",
-    "open_registration": "true",
-    "allow_bitly_default_domain": "true",
+    "open_registration": "false",
+    "allow_bitly_default_domain": "false",
     "analytics_harvest_interval_min": "60",
     "analytics_retention_days": "365",
 }

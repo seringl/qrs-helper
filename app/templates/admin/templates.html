@@ -59,8 +59,8 @@
         <fieldset class="border rounded p-3 mb-3" id="size-controls">
           <legend class="float-none w-auto px-2 h6 text-muted">Shape &amp; sizing</legend>
           {{ slider('corner_radius_px', 'Outer corner radius', edit.corner_radius_px if edit else 120, 0, 300, 2) }}
-          {{ slider('inner_corner_radius_px', 'Inner corner radius', edit.inner_corner_radius_px if edit else 30, 0, 300, 2) }}
-          {{ slider('qr_size_px', 'QR code size', edit.qr_size_px if edit else 880, 400, 1050, 5) }}
+          {{ slider('inner_corner_radius_px', 'Inner corner radius', edit.inner_corner_radius_px if edit else 60, 0, 300, 2) }}
+          {{ slider('qr_size_px', 'QR code size', edit.qr_size_px if edit else 980, 400, 1050, 5) }}
           {{ slider('cta_baseline_y', 'CTA text position', edit.cta_baseline_y if edit else 1320, 1150, 1640, 5) }}
           {{ slider('url_baseline_y', 'URL text position', edit.url_baseline_y if edit else 1480, 1150, 1640, 5) }}
         </fieldset>
@@ -89,8 +89,8 @@
       <!-- §9.3: live SVG preview updates as the sliders move -->
       <svg id="preview" viewBox="0 0 1275 1650" style="max-width:100%;">
         <rect id="p-card" x="0" y="0" width="1275" height="1650" rx="120" fill="#1E395E"/>
-        <rect id="p-panel" x="90" y="90" width="1095" height="1050" rx="30" fill="#FFFFFF"/>
-        <rect id="p-qr" x="197" y="175" width="880" height="880" fill="#1E395E" opacity="0.15"/>
+        <rect id="p-panel" x="90" y="90" width="1095" height="1050" rx="60" fill="#FFFFFF"/>
+        <rect id="p-qr" x="147" y="125" width="980" height="980" fill="#1E395E" opacity="0.15"/>
         <text id="p-cta" x="637" y="1320" font-size="95" font-weight="600" text-anchor="middle" fill="#FFFFFF" font-family="Inter, sans-serif">Scan for more info!</text>
         <text id="p-url" x="637" y="1480" font-size="70" font-weight="300" text-anchor="middle" fill="#FFFFFF" font-family="Inter, sans-serif">https://example.co/Link</text>
       </svg>

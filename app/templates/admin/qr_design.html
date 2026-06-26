@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+{% block title %}Admin — QR Design{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-3">Admin</h1>
+{% include "admin/_nav.html" %}
+
+<form method="post" id="qr-design-form">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="row g-4">
+
+  {# ── Left column: settings ─────────────────────────────────────────── #}
+  <div class="col-lg-7">
+
+    {# Generation method #}
+    <div class="card shadow-sm mb-3"><div class="card-body">
+      <h2 class="h5 mb-3">Generation method</h2>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="qr_method" id="m-qrm"
+               value="qrcode_monkey" {% if qr_method != 'local' %}checked{% endif %}>
+        <label class="form-check-label" for="m-qrm">QRCode-Monkey.com API</label>
+      </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="qr_method" id="m-local"
+               value="local" {% if qr_method == 'local' %}checked{% endif %}>
+        <label class="form-check-label" for="m-local">Local generation (segno)</label>
+      </div>
+      <div class="form-text mt-1">
+        QRCode-Monkey.com produces styled, branded codes with full shape and color options.
+        Local generation uses the <code>segno</code> library — no external API call, but
+        only body color, background color, and error correction are configurable; all other
+        options below are disabled.
+      </div>
+      <div id="local-warn" class="alert alert-warning mt-2 mb-0 py-2 {% if qr_method != 'local' %}d-none{% endif %}">
+        Local mode active — logo embedding and all greyed-out options are unavailable.
+        Logos selected on the create form will be silently ignored.
+      </div>
+    </div></div>
+
+    {# Shape options — QRCode Monkey only #}
+    <div class="card shadow-sm mb-3"><div class="card-body">
+      <h2 class="h5 mb-3">Shape <span class="badge text-bg-secondary qrm-only">QRCode Monkey only</span></h2>
+      <div class="row g-3">
+        <div class="col-sm-4">
+          <label class="form-label" for="body">Body / module shape</label>
+          <select class="form-select qrm-field" name="body" id="body">
+            {% for val, label in body_shapes %}
+            <option value="{{ val }}" {% if s.body == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-sm-4">
+          <label class="form-label" for="eye">Eye frame</label>
+          <select class="form-select qrm-field" name="eye" id="eye">
+            {% for val, label in eye_frames %}
+            <option value="{{ val }}" {% if s.eye == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-sm-4">
+          <label class="form-label" for="eyeBall">Eye ball</label>
+          <select class="form-select qrm-field" name="eyeBall" id="eyeBall">
+            {% for val, label in eye_balls %}
+            <option value="{{ val }}" {% if s.eyeBall == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div></div>
+
+    {# Colors #}
+    <div class="card shadow-sm mb-3"><div class="card-body">
+      <h2 class="h5 mb-3">Colors</h2>
+      <div class="row g-3">
+        <div class="col-6 col-sm-3">
+          <label class="form-label" for="bodyColor">Body color</label>
+          <input class="form-control form-control-color w-100" type="color"
+                 name="bodyColor" id="bodyColor" value="{{ s.bodyColor }}">
+        </div>
+        <div class="col-6 col-sm-3">
+          <label class="form-label" for="bgColor">Background</label>
+          <input class="form-control form-control-color w-100" type="color"
+                 name="bgColor" id="bgColor" value="{{ s.bgColor }}">
+        </div>
+        <div class="col-6 col-sm-3">
+          <label class="form-label" for="eyeColor">
+            Eye frames <span class="badge text-bg-secondary qrm-only small">API only</span>
+          </label>
+          <input class="form-control form-control-color w-100 qrm-field" type="color"
+                 name="eyeColor" id="eyeColor" value="{{ s.eyeColor }}">
+        </div>
+        <div class="col-6 col-sm-3">
+          <label class="form-label" for="eyeBallColor">
+            Eye balls <span class="badge text-bg-secondary qrm-only small">API only</span>
+          </label>
+          <input class="form-control form-control-color w-100 qrm-field" type="color"
+                 name="eyeBallColor" id="eyeBallColor" value="{{ s.eyeBallColor }}">
+        </div>
+      </div>
+    </div></div>
+
+    {# Error correction #}
+    <div class="card shadow-sm mb-3"><div class="card-body">
+      <h2 class="h5 mb-2">Error correction level</h2>
+      <div class="form-text mb-2">
+        Forced to <strong>H</strong> (high) when a logo is embedded. This setting applies
+        to logo-free generations.
+      </div>
+      <select class="form-select" name="ecLevel" id="ecLevel" style="max-width:14rem;">
+        {% for val, label in [('L','L — Low (~7%)'),('M','M — Medium (~15%)'),('Q','Q — Quartile (~25%)'),('H','H — High (~30%)')] %}
+        <option value="{{ val }}" {% if s.ecLevel == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div></div>
+
+    {# Gradient — QRCode Monkey only #}
+    <div class="card shadow-sm mb-3"><div class="card-body">
+      <h2 class="h5 mb-1">
+        Gradient <span class="badge text-bg-secondary qrm-only">QRCode Monkey only</span>
+      </h2>
+      <div class="form-check mt-2 mb-3">
+        <input class="form-check-input qrm-field" type="checkbox" name="gradientEnabled"
+               id="gradientEnabled" {% if s.gradientEnabled %}checked{% endif %}>
+        <label class="form-check-label" for="gradientEnabled">Enable gradient</label>
+      </div>
+      <div id="gradient-fields" class="row g-3 {% if not s.gradientEnabled %}d-none{% endif %}">
+        <div class="col-6 col-sm-3">
+          <label class="form-label" for="gradientColor1">Color 1</label>
+          <input class="form-control form-control-color w-100 qrm-field" type="color"
+                 name="gradientColor1" id="gradientColor1" value="{{ s.gradientColor1 }}">
+        </div>
+        <div class="col-6 col-sm-3">
+          <label class="form-label" for="gradientColor2">Color 2</label>
+          <input class="form-control form-control-color w-100 qrm-field" type="color"
+                 name="gradientColor2" id="gradientColor2" value="{{ s.gradientColor2 }}">
+        </div>
+        <div class="col-sm-3">
+          <label class="form-label" for="gradientType">Type</label>
+          <select class="form-select qrm-field" name="gradientType" id="gradientType">
+            <option value="linear" {% if s.gradientType == 'linear' %}selected{% endif %}>Linear</option>
+            <option value="radial" {% if s.gradientType == 'radial' %}selected{% endif %}>Radial</option>
+          </select>
+        </div>
+        <div class="col-sm-3 d-flex align-items-end">
+          <div class="form-check mb-2">
+            <input class="form-check-input qrm-field" type="checkbox" name="gradientOnEyes"
+                   id="gradientOnEyes" {% if s.gradientOnEyes %}checked{% endif %}>
+            <label class="form-check-label" for="gradientOnEyes">Apply to eyes</label>
+          </div>
+        </div>
+      </div>
+    </div></div>
+
+    {# Eye transforms — QRCode Monkey only #}
+    <div class="card shadow-sm mb-3"><div class="card-body">
+      <h2 class="h5">
+        Eye transforms <span class="badge text-bg-secondary qrm-only">QRCode Monkey only</span>
+      </h2>
+      <p class="text-muted small mb-3">
+        Rotate or flip each finder-pattern eye frame and ball independently. The default
+        flips the upper-left frame and ball horizontally so asymmetric styles face inward.
+      </p>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Eye element</th>
+              {% for tval, tlabel in eye_transforms %}
+              <th class="text-center small">{{ tlabel }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for ekey, elabel in eye_keys %}
+            <tr>
+              <td class="text-nowrap small">{{ elabel }}</td>
+              {% for tval, tlabel in eye_transforms %}
+              <td class="text-center">
+                <input class="form-check-input qrm-field" type="checkbox"
+                       name="{{ ekey }}_{{ tval }}"
+                       id="{{ ekey }}_{{ tval }}"
+                       {% if tval in (s.get(ekey) or []) %}checked{% endif %}>
+              </td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div></div>
+
+    <button class="btn btn-primary">Save settings</button>
+  </div>
+
+  {# ── Right column: preview ─────────────────────────────────────────── #}
+  <div class="col-lg-5">
+    <div class="card shadow-sm sticky-top" style="top:1rem;"><div class="card-body">
+      <h2 class="h5 mb-3">Preview</h2>
+      <div class="mb-3">
+        <label class="form-label" for="preview_url">URL to encode</label>
+        <input class="form-control" type="url" id="preview_url" name="preview_url"
+               value="https://qrstandards.com" placeholder="https://example.com">
+      </div>
+      <button type="button" class="btn btn-outline-primary mb-3" id="preview-btn">
+        Generate preview
+      </button>
+      <div id="preview-area" class="text-center">
+        <p class="text-muted small" id="preview-hint">
+          Click "Generate preview" to see the current style.<br>
+          Settings are not saved until you click "Save settings."
+        </p>
+        <img id="preview-img" src="" alt="QR preview" class="img-fluid rounded d-none"
+             style="max-width:300px;">
+        <div id="preview-error" class="alert alert-danger mt-2 d-none"></div>
+        <div id="preview-spinner" class="spinner-border text-secondary d-none" role="status">
+          <span class="visually-hidden">Generating…</span>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+</div>{# /row #}
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const form = document.getElementById('qr-design-form');
+  const radios = form.querySelectorAll('input[name="qr_method"]');
+  const qrmFields = form.querySelectorAll('.qrm-field');
+  const localWarn = document.getElementById('local-warn');
+
+  function setLocalMode(isLocal) {
+    qrmFields.forEach(el => {
+      el.disabled = isLocal;
+      el.closest('td,div')?.classList.toggle('opacity-50', isLocal);
+    });
+    localWarn.classList.toggle('d-none', !isLocal);
+  }
+
+  radios.forEach(r => r.addEventListener('change', () => {
+    setLocalMode(document.getElementById('m-local').checked);
+  }));
+  // Apply on load
+  setLocalMode(document.getElementById('m-local').checked);
+
+  // Toggle gradient sub-fields
+  const gradCheck = document.getElementById('gradientEnabled');
+  const gradFields = document.getElementById('gradient-fields');
+  gradCheck.addEventListener('change', () => {
+    gradFields.classList.toggle('d-none', !gradCheck.checked);
+  });
+
+  // Preview
+  document.getElementById('preview-btn').addEventListener('click', async () => {
+    const img = document.getElementById('preview-img');
+    const hint = document.getElementById('preview-hint');
+    const err = document.getElementById('preview-error');
+    const spin = document.getElementById('preview-spinner');
+
+    img.classList.add('d-none');
+    err.classList.add('d-none');
+    hint.classList.add('d-none');
+    spin.classList.remove('d-none');
+
+    const data = new FormData(form);
+    // Include preview_url (it's already in the form because name="preview_url")
+    try {
+      const resp = await fetch('{{ url_for("admin.qr_design_preview") }}', {
+        method: 'POST',
+        body: data,
+      });
+      if (!resp.ok) {
+        const text = await resp.text();
+        err.textContent = 'Preview failed: ' + text;
+        err.classList.remove('d-none');
+      } else {
+        const blob = await resp.blob();
+        img.src = URL.createObjectURL(blob);
+        img.classList.remove('d-none');
+      }
+    } catch (e) {
+      err.textContent = 'Preview request failed: ' + e;
+      err.classList.remove('d-none');
+    } finally {
+      spin.classList.add('d-none');
+    }
+  });
+})();
+</script>
+{% endblock %}

@@ -31,10 +31,33 @@ TOKEN_TTL_SECONDS = 6 * 3600
 PNG_SIZE = 2000
 SVG_SIZE = 1275
 
-# §8.3 approved standard QR style. Eye/eyeball colours are requested
-# explicitly because the API otherwise renders eyes black. The upper-left
-# eye frame and ball are flipped horizontally via erf1/erf1b so frame2/ball2
-# face the correct direction.
+# Default QR style in the stored settings format (eyeColor / eyeBallColor are
+# single values expanded to per-eye API fields by build_config). This is also
+# the factory default written when no qr_style_json setting exists.
+DEFAULT_QR_STYLE = {
+    "body": "circle",
+    "eye": "frame2",
+    "eyeBall": "ball2",
+    "bodyColor": "#1E395E",
+    "bgColor": "#FFFFFF",
+    "eyeColor": "#1E395E",
+    "eyeBallColor": "#1E395E",
+    "erf1": ["fh"],
+    "erf1b": ["fh"],
+    "erf2": [],
+    "erf2b": [],
+    "erf3": [],
+    "erf3b": [],
+    "ecLevel": "M",
+    "gradientEnabled": False,
+    "gradientColor1": "#1E395E",
+    "gradientColor2": "#4A7AB5",
+    "gradientType": "linear",
+    "gradientOnEyes": False,
+}
+
+# Internal API config dict used as a fallback when no style arg is supplied.
+# Kept in the expanded per-eye format that the API expects.
 QR_STYLE = {
     "body": "circle",
     "eye": "frame2",
@@ -52,6 +75,50 @@ QR_STYLE = {
 }
 
 BODY_COLOR = QR_STYLE["bodyColor"]
+
+
+def build_config(style):
+    """Convert the stored qr_style dict to the QRCode Monkey API config payload.
+
+    The stored style uses single eyeColor / eyeBallColor values; these are
+    expanded to the per-eye fields (eye1Color … eyeBall3Color) that the API
+    requires. Hex colours are normalised to upper case.
+    """
+    s = style or {}
+    body_color = (s.get("bodyColor") or BODY_COLOR).upper()
+    bg_color = (s.get("bgColor") or "#FFFFFF").upper()
+    eye_color = (s.get("eyeColor") or body_color).upper()
+    ball_color = (s.get("eyeBallColor") or body_color).upper()
+
+    cfg = {
+        "body": s.get("body", QR_STYLE["body"]),
+        "eye": s.get("eye", QR_STYLE["eye"]),
+        "eyeBall": s.get("eyeBall", QR_STYLE["eyeBall"]),
+        "bodyColor": body_color,
+        "bgColor": bg_color,
+        "eye1Color": eye_color,
+        "eye2Color": eye_color,
+        "eye3Color": eye_color,
+        "eyeBall1Color": ball_color,
+        "eyeBall2Color": ball_color,
+        "eyeBall3Color": ball_color,
+    }
+
+    for key in ("erf1", "erf1b", "erf2", "erf2b", "erf3", "erf3b"):
+        val = s.get(key, [])
+        if isinstance(val, list) and val:
+            cfg[key] = val
+
+    if s.get("gradientEnabled"):
+        gc1 = (s.get("gradientColor1") or "").strip()
+        gc2 = (s.get("gradientColor2") or "").strip()
+        if gc1 and gc2:
+            cfg["gradientColor1"] = gc1.upper()
+            cfg["gradientColor2"] = gc2.upper()
+            cfg["gradientType"] = s.get("gradientType", "linear")
+            cfg["gradientOnEyes"] = bool(s.get("gradientOnEyes", False))
+
+    return cfg
 
 
 class QRMonkeyError(Exception):
@@ -136,14 +203,20 @@ def refresh_logo_token(logo, logo_path):
 
 
 # ── QR generation ──────────────────────────────────────────────────────────
-def generate(data_url, file_format, size, logo_token=None):
+def generate(data_url, file_format, size, logo_token=None, style=None):
     """Fetch the styled QR in ``file_format`` ("png" or "svg").
 
-    Returns (content_bytes, config). Error correction is H when a logo is
-    embedded (so the logo cannot eat into recoverable data), otherwise M.
+    Returns (content_bytes, config). If ``style`` is provided (the stored
+    qr_style dict), it is converted to an API config via build_config();
+    otherwise QR_STYLE is used as-is. Error correction is forced to H when a
+    logo is present; otherwise the style's ecLevel (default M) is used.
     """
-    config = dict(QR_STYLE)
-    config["ecLevel"] = "H" if logo_token else "M"
+    if style is not None:
+        config = build_config(style)
+        config["ecLevel"] = "H" if logo_token else (style.get("ecLevel") or "M")
+    else:
+        config = dict(QR_STYLE)
+        config["ecLevel"] = "H" if logo_token else "M"
     if logo_token:
         config["logo"] = logo_token
         # "clean" knocks QR modules out behind the logo for a crisp edge.
